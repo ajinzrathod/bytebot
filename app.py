@@ -4,12 +4,13 @@ from openai import OpenAI
 import re
 import os
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 
 load_dotenv()
 
 app = Flask(__name__)
-
+CORS(app, resources={r"/ask": {"origins": "*"}})
 ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 
 incubyte_byte_bot_api_key = os.getenv("INCUBYTE_BYTE_BOT_API_KEY")
