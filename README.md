@@ -29,6 +29,7 @@ ASSISTANT_ID=assistant_id
 INCUBYTE_BYTE_BOT_API_KEY=API_KEY
 ASSISTANT_SERVICE_ENABLED=1
 ASK_TOKEN=your-ask-token
+ASK_STRING=askbb
 ```
 
 ### Build image and start your applicant using Docker

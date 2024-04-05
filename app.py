@@ -6,6 +6,8 @@ import re
 import os
 from dotenv import load_dotenv
 from flask_cors import CORS
+from bs4 import BeautifulSoup
+
 
 load_dotenv()
 
@@ -18,6 +20,7 @@ CLIENT = OpenAI(api_key=INCUBYTE_BYTEBOT_API_KEY)
 PROD = int(os.getenv("PROD"))
 ASSISTANT_SERVICE_ENABLED = int(os.getenv("ASSISTANT_SERVICE_ENABLED"))
 ASK_TOKEN = os.getenv("ASK_TOKEN")
+ASK_STRING = os.getenv("ASK_STRING")
 
 
 @app.route('/health')
@@ -27,7 +30,7 @@ def health_check():
 
 @app.route('/')
 def index():
-    return '<h1>Welcome to Byte Bot</h1>'
+    return '<h1>Hi, Welcome to Byte Bot</h1>'
 
 
 def validate_token(func):
@@ -40,6 +43,15 @@ def validate_token(func):
     return wrapper
 
 
+def save_to_file(content, response_text):
+    with open("data.md", "a") as file:
+        file.write("### Plain Text:\n")
+        file.write(f"{content}\n\n")
+        file.write("### Response Text:\n")
+        file.write(f"{response_text}\n\n")
+        file.write("---\n\n")
+
+
 @app.route('/ask', methods=['POST'])
 @validate_token
 def ask_incubyte():
@@ -49,6 +61,10 @@ def ask_incubyte():
     content = request.json.get('question', '')
     if content == '':
         return jsonify({'error': 'No question provided'}), 400
+
+    soup = BeautifulSoup(content, "html.parser")
+    content = ' '.join(soup.get_text().split())
+    content = re.sub(re.escape(ASK_STRING), '', content, flags=re.IGNORECASE)
 
     thread = CLIENT.beta.threads.create(
         messages=[
@@ -72,12 +88,20 @@ def ask_incubyte():
     messages = message_response.data
 
     latest_message = messages[0]
+    response_text = get_response_text(latest_message)
+    save_to_file(content, response_text)
+    return jsonify({'response': response_text})
+
+
+def get_response_text(latest_message):
     response_text = latest_message.content[0].text.value
 
     # Remove source information from the response
     response_text = re.sub(r'\【.*?\】', '', response_text)
 
-    return jsonify({'response': response_text})
+    # To prevent a continuous loop, remove 'ask string' from the API response
+    response_text = re.sub(re.escape(ASK_STRING), '', response_text, flags=re.IGNORECASE)
+    return response_text
 
 
 if __name__ == '__main__':
