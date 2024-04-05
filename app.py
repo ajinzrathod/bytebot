@@ -26,7 +26,7 @@ def health_check():
 
 @app.route('/')
 def index():
-    return '<h1>Welcome to Byte Bot</h1>'
+    return '<h1>uu jj Welcome to Byte Bot uu</h1>'
 
 
 @app.route('/ask', methods=['POST'])
@@ -69,8 +69,5 @@ def ask_incubyte():
 
 
 if __name__ == '__main__':
-    if PROD:
-        app.run(host='0.0.0.0', port=80)
-    else:
-        app.run(debug=True)
+    app.run(host='0.0.0.0', port=5000, debug=True)
 
