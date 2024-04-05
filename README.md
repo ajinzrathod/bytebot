@@ -28,6 +28,7 @@ PROD=0
 ASSISTANT_ID=assistant_id
 INCUBYTE_BYTE_BOT_API_KEY=API_KEY
 ASSISTANT_SERVICE_ENABLED=1
+ASK_TOKEN=your-ask-token
 ```
 
 ### Build image and start your applicant using Docker
@@ -36,3 +37,12 @@ docker-compose up
 ```
 
 Visit [localhost:5000](localhost:5000) on your system and check if you see the welcome screen
+
+### Check if the ask request is working
+
+```curl
+curl --location --request POST 'http://localhost:5000/ask' \
+--header 'Content-Type: application/json' \
+--header 'Authorization: Bearer <your-ask-token>' \
+--data-raw '{"question": "Who are the co founders of Incubyte"}'
+```
