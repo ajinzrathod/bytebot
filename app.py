@@ -8,6 +8,8 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 from bs4 import BeautifulSoup
 from flask_caching import Cache
+
+
 load_dotenv()
 
 app = Flask(__name__)
@@ -21,6 +23,7 @@ PROD = int(os.getenv("PROD"))
 ASSISTANT_SERVICE_ENABLED = int(os.getenv("ASSISTANT_SERVICE_ENABLED"))
 ASK_TOKEN = os.getenv("ASK_TOKEN")
 ASK_STRING = os.getenv("ASK_STRING")
+CACHE_TTL = os.getenv("CACHE_TTL")
 
 
 @app.route('/health')
@@ -70,8 +73,7 @@ def ask_incubyte():
     cached_response = cache.get(cache_key)
 
     if cached_response:
-        # print("from cache")
-        return jsonify({'response': cached_response})
+        return jsonify({'response': cached_response, 'cached': True})
 
     thread = CLIENT.beta.threads.create(
         messages=[
@@ -96,10 +98,10 @@ def ask_incubyte():
 
     latest_message = messages[0]
     response_text = get_response_text(latest_message)
-    # print("Setting request")
-    cache.set(cache_key, response_text, timeout=3600)
+
+    cache.set(cache_key, response_text, timeout=CACHE_TTL)
     save_to_file(content, response_text)
-    return jsonify({'response': response_text})
+    return jsonify({'response': response_text, 'cached': False})
 
 
 def get_response_text(latest_message):

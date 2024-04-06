@@ -30,6 +30,7 @@ INCUBYTE_BYTE_BOT_API_KEY=API_KEY
 ASSISTANT_SERVICE_ENABLED=1
 ASK_TOKEN=your-ask-token
 ASK_STRING=askbb
+CACHE_TTL=cache-time-to-live-in-seconds
 ```
 
 ### Build image and start your applicant using Docker
