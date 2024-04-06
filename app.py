@@ -7,11 +7,11 @@ import os
 from dotenv import load_dotenv
 from flask_cors import CORS
 from bs4 import BeautifulSoup
-
-
+from flask_caching import Cache
 load_dotenv()
 
 app = Flask(__name__)
+cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_HOST': 'redis', 'CACHE_REDIS_PORT': 6379})
 CORS(app, resources={r"/ask": {"origins": "*"}})
 ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 
@@ -66,6 +66,13 @@ def ask_incubyte():
     content = ' '.join(soup.get_text().split())
     content = re.sub(re.escape(ASK_STRING), '', content, flags=re.IGNORECASE)
 
+    cache_key = content.lower().strip()
+    cached_response = cache.get(cache_key)
+
+    if cached_response:
+        # print("from cache")
+        return jsonify({'response': cached_response})
+
     thread = CLIENT.beta.threads.create(
         messages=[
             {
@@ -89,6 +96,8 @@ def ask_incubyte():
 
     latest_message = messages[0]
     response_text = get_response_text(latest_message)
+    # print("Setting request")
+    cache.set(cache_key, response_text, timeout=3600)
     save_to_file(content, response_text)
     return jsonify({'response': response_text})
 
