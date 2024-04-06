@@ -8,4 +8,11 @@ services:
     volumes:
       - .:/app
     command: sh -c "python app.py"
+    depends_on:
+      - redis
+  redis:
+    image: "redis:alpine"
+    container_name: bytebot-redis
+    ports:
+      - "6379:6379"
 
