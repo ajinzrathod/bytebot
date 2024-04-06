@@ -9,14 +9,19 @@ from flask_cors import CORS
 from bs4 import BeautifulSoup
 from flask_caching import Cache
 
-
 load_dotenv()
 
 app = Flask(__name__)
-cache = Cache(app, config={'CACHE_TYPE': 'redis', 'CACHE_REDIS_HOST': 'redis', 'CACHE_REDIS_PORT': 6379})
 CORS(app, resources={r"/ask": {"origins": "*"}})
-ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 
+# redis configuration
+redis_url = os.getenv('REDISCLOUD_URL')
+app.config['CACHE_TYPE'] = 'redis'
+app.config['CACHE_REDIS_URL'] = redis_url
+cache = Cache(app)
+
+# Environmental variables
+ASSISTANT_ID = os.getenv("ASSISTANT_ID")
 INCUBYTE_BYTEBOT_API_KEY = os.getenv("INCUBYTE_BYTE_BOT_API_KEY")
 CLIENT = OpenAI(api_key=INCUBYTE_BYTEBOT_API_KEY)
 PROD = int(os.getenv("PROD"))
@@ -33,7 +38,7 @@ def health_check():
 
 @app.route('/')
 def index():
-    return '<h1>Hi, Welcome to Byte Bot</h1>'
+    return '<meta name="viewport" content="width=device-width, initial-scale=1.0"> <h1>Hi, Welcome to Byte Bot</h1> <ul> <li>Aayush Prajapati</li> <li>Ajinkya Rathod</li>'
 
 
 def validate_token(func):
@@ -43,6 +48,7 @@ def validate_token(func):
         if not token or token != f"Bearer {ASK_TOKEN}":
             return jsonify({"message": "Unauthorized"}), 401
         return func(*args, **kwargs)
+
     return wrapper
 
 

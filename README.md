@@ -31,6 +31,7 @@ ASSISTANT_SERVICE_ENABLED=1
 ASK_TOKEN=your-ask-token
 ASK_STRING=askbb
 CACHE_TTL=cache-time-to-live-in-seconds
+REDISCLOUD_URL=your-redis-url
 ```
 
 ### Build image and start your applicant using Docker
