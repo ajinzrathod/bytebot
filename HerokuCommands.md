@@ -12,3 +12,4 @@ Select the plan that suits your needs
 
 ### Get redis server url
 heroku config:get REDISCLOUD_URL -a your-heroku-app-name
+    

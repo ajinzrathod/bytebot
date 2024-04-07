@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat with Incubyte</title>
+    <link href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="container">
+    <h1>Hi, Welcome to Byte Bot</h1>
+    <ul>
+        <li>Aayush Prajapati</li>
+        <li>Ajinkya Rathod</li>
+    </ul>
+
+    <div id="chat-container" class="d-flex flex-column">
+        <div class="chat-messages">
+            <!-- Chat messages will be added here -->
+        </div>
+        <div class="input-group chat-input">
+            <input type="text" class="form-control" id="message-input" placeholder="Type your message here..."
+                   onkeypress="handleKeyPress(event)">
+            <div class="input-group-append">
+                <button class="btn btn-primary" id="send-button" type="button" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
