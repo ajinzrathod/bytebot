@@ -1,5 +1,4 @@
-from functools import wraps
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, render_template
 import time
 from openai import OpenAI
 import re
@@ -8,6 +7,9 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 from bs4 import BeautifulSoup
 from flask_caching import Cache
+
+from save_data.save_to_md_file import save_to_file
+from validations.validate_token import validate_token
 
 load_dotenv()
 
@@ -27,7 +29,6 @@ CLIENT = OpenAI(api_key=INCUBYTE_BYTEBOT_API_KEY)
 PROD = int(os.getenv("PROD"))
 ASSISTANT_SERVICE_ENABLED = int(os.getenv("ASSISTANT_SERVICE_ENABLED"))
 ASK_TOKEN = os.getenv("ASK_TOKEN")
-ASK_STRING = os.getenv("ASK_STRING")
 CACHE_TTL = os.getenv("CACHE_TTL")
 
 
@@ -38,32 +39,13 @@ def health_check():
 
 @app.route('/')
 def index():
-    return '<meta name="viewport" content="width=device-width, initial-scale=1.0"> <h1>Hi, Welcome to Byte Bot</h1> <ul> <li>Aayush Prajapati</li> <li>Ajinkya Rathod</li>'
-
-
-def validate_token(func):
-    @wraps(func)
-    def wrapper(*args, **kwargs):
-        token = request.headers.get('Authorization')
-        if not token or token != f"Bearer {ASK_TOKEN}":
-            return jsonify({"message": "Unauthorized"}), 401
-        return func(*args, **kwargs)
-
-    return wrapper
-
-
-def save_to_file(content, response_text):
-    with open("data.md", "a") as file:
-        file.write("### Plain Text:\n")
-        file.write(f"{content}\n\n")
-        file.write("### Response Text:\n")
-        file.write(f"{response_text}\n\n")
-        file.write("---\n\n")
+    return render_template('index.html')
 
 
 @app.route('/ask', methods=['POST'])
-@validate_token
+# @validate_token(ASK_TOKEN)
 def ask_incubyte():
+    ask_string = os.getenv("ASK_STRING")
     if not ASSISTANT_SERVICE_ENABLED:
         return jsonify({'response': 'We are not serving request at this time'}), 503
 
@@ -71,14 +53,19 @@ def ask_incubyte():
     if content == '':
         return jsonify({'error': 'No question provided'}), 400
 
+    nocache = "-nocache"
+    string_nocache = ask_string + nocache
+    if content.lower().startswith(string_nocache):
+        ask_string = string_nocache
+
     soup = BeautifulSoup(content, "html.parser")
     content = ' '.join(soup.get_text().split())
-    content = re.sub(re.escape(ASK_STRING), '', content, flags=re.IGNORECASE)
+    content = re.sub(re.escape(ask_string), '', content, flags=re.IGNORECASE)
 
     cache_key = content.lower().strip()
     cached_response = cache.get(cache_key)
 
-    if cached_response:
+    if cached_response and not ask_string.strip().endswith(nocache):
         return jsonify({'response': cached_response, 'cached': True})
 
     thread = CLIENT.beta.threads.create(
@@ -103,21 +90,21 @@ def ask_incubyte():
     messages = message_response.data
 
     latest_message = messages[0]
-    response_text = get_response_text(latest_message)
+    response_text = get_response_text(latest_message, ask_string)
 
     cache.set(cache_key, response_text, timeout=CACHE_TTL)
     save_to_file(content, response_text)
     return jsonify({'response': response_text, 'cached': False})
 
 
-def get_response_text(latest_message):
+def get_response_text(latest_message, ask_string):
     response_text = latest_message.content[0].text.value
 
     # Remove source information from the response
     response_text = re.sub(r'\【.*?\】', '', response_text)
 
     # To prevent a continuous loop, remove 'ask string' from the API response
-    response_text = re.sub(re.escape(ASK_STRING), '', response_text, flags=re.IGNORECASE)
+    response_text = re.sub(re.escape(ask_string), '', response_text, flags=re.IGNORECASE)
     return response_text
 
 
